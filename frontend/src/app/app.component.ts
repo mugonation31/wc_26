@@ -959,7 +959,7 @@ export class AppComponent {
       const user = this.authService.user();
       if (user) {
         this.picksService.setCurrentUid(user.uid);
-        this.picksService.loadPicks(user.uid);
+        this.picksService.startListening(user.uid);
       } else {
         this.picksService.setCurrentUid(null);
         this.picksService.clearPicks();

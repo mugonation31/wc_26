@@ -1,5 +1,5 @@
 import { Injectable, signal } from '@angular/core';
-import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, getDoc, onSnapshot, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase';
 
 export interface RoundPick {
@@ -21,21 +21,42 @@ export interface UserPicks {
 export class PicksService {
   userPicks = signal<UserPicks | null>(null);
   saving = signal(false);
-
-  async loadPicks(uid: string) {
-    const snap = await getDoc(doc(db, 'picks', uid));
-    if (this.currentUid() === uid) {
-      this.userPicks.set(snap.exists() ? (snap.data() as UserPicks) : null);
-    }
-  }
-
   currentUid = signal<string | null>(null);
+
+  private unsubscribe: (() => void) | null = null;
 
   setCurrentUid(uid: string | null) { this.currentUid.set(uid); }
 
+  startListening(uid: string) {
+    this.stopListening();
+    this.unsubscribe = onSnapshot(
+      doc(db, 'picks', uid),
+      (snap) => {
+        if (this.currentUid() === uid) {
+          this.userPicks.set(snap.exists() ? (snap.data() as UserPicks) : null);
+        }
+      },
+      (err) => console.error('Picks listener error:', err)
+    );
+  }
+
+  stopListening() {
+    if (this.unsubscribe) {
+      this.unsubscribe();
+      this.unsubscribe = null;
+    }
+  }
+
   async savePick(uid: string, displayName: string, photoURL: string, round: number, team: string, flag: string) {
-    const current = this.userPicks() ?? { uid, displayName, photoURL, rounds: {}, eliminated: false };
+    // Always read fresh data from Firestore before writing to avoid race conditions
+    // and prevent overwriting other rounds when the local signal is stale.
+    const snap = await getDoc(doc(db, 'picks', uid));
+    const current: UserPicks = snap.exists()
+      ? (snap.data() as UserPicks)
+      : { uid, displayName, photoURL, rounds: {}, eliminated: false };
+
     if (current.rounds[round]) throw new Error(`Round ${round} pick already locked in`);
+
     this.saving.set(true);
     const updated: UserPicks = {
       ...current,
@@ -46,15 +67,16 @@ export class PicksService {
     };
     try {
       await setDoc(doc(db, 'picks', uid), updated);
-      this.userPicks.set({ ...updated, rounds: { ...updated.rounds, [round]: { team, flag } } });
     } catch (err) {
       throw err;
     } finally {
       this.saving.set(false);
     }
+    // onSnapshot will update userPicks automatically after the write commits
   }
 
   clearPicks() {
+    this.stopListening();
     this.userPicks.set(null);
   }
 }
