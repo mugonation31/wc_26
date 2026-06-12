@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build outputs
+frontend/dist/
+frontend/.angular/
+backend/functions/lib/
+
+# Firebase local cache
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+
+# Environment files — contain real Firebase API keys, NEVER commit
+# (also excluded in frontend/.gitignore as a second line of defence)
+frontend/src/environments/environment.ts
+frontend/src/environments/environment.prod.ts
+
+# Playwright test artefacts
+frontend/playwright-report/
+frontend/test-results/
+
+# Claude Code internal settings (not project code)
+.claude/settings.local.json
+
+# OS
+.DS_Store
+Thumbs.db
