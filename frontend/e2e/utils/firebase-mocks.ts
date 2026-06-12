@@ -32,7 +32,9 @@ export const MOCK_USER = {
 };
 
 // Firebase project config — must match src/environments/environment.ts
-const FIREBASE_API_KEY = 'REDACTED_FIREBASE_API_KEY';
+// Read from env so the real key is never hardcoded in source.
+// Set FIREBASE_API_KEY in your CI environment or a local .env file.
+const FIREBASE_API_KEY = process.env['FIREBASE_API_KEY'] ?? '';
 const FIREBASE_APP_NAME = '[DEFAULT]';
 
 // ---------------------------------------------------------------------------
