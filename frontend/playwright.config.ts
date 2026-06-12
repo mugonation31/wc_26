@@ -1,4 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
+import { config } from 'dotenv';
+config({ path: '../.env' });
 
 /**
  * WC26 Last Man Standing — Playwright E2E configuration.

@@ -17,6 +17,8 @@ ui-debug.log
 # (also excluded in frontend/.gitignore as a second line of defence)
 frontend/src/environments/environment.ts
 frontend/src/environments/environment.prod.ts
+.env
+.env.local
 
 # Playwright test artefacts
 frontend/playwright-report/
