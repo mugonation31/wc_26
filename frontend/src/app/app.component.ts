@@ -964,7 +964,7 @@ export class AppComponent {
         this.picksService.setCurrentUid(null);
         this.picksService.clearPicks();
       }
-    });
+    }, { allowSignalWrites: true });
   }
 
   matchRound(dateStr: string): number | null {
