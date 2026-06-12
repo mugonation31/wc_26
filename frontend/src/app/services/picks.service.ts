@@ -1,4 +1,4 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, NgZone, inject, signal } from '@angular/core';
 import { doc, setDoc, getDoc, onSnapshot, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase';
 
@@ -24,6 +24,7 @@ export class PicksService {
   currentUid = signal<string | null>(null);
 
   private unsubscribe: (() => void) | null = null;
+  private zone = inject(NgZone);
 
   setCurrentUid(uid: string | null) { this.currentUid.set(uid); }
 
@@ -32,9 +33,13 @@ export class PicksService {
     this.unsubscribe = onSnapshot(
       doc(db, 'picks', uid),
       (snap) => {
-        if (this.currentUid() === uid) {
-          this.userPicks.set(snap.exists() ? (snap.data() as UserPicks) : null);
-        }
+        // Firestore callbacks fire outside Angular's zone — run() ensures
+        // the signal write triggers change detection.
+        this.zone.run(() => {
+          if (this.currentUid() === uid) {
+            this.userPicks.set(snap.exists() ? (snap.data() as UserPicks) : null);
+          }
+        });
       },
       (err) => console.error('Picks listener error:', err)
     );
